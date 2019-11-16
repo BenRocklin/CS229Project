@@ -6,3 +6,6 @@ def get_song_features(song_name, num_notes, octave=False, duration=False):
     midi = MidiFile(song_name)
     # for i, track in enumerate(midi.tracks):
     #     print(track.name)
+    X = None
+    y = None
+    return X, y
