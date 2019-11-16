@@ -86,6 +86,6 @@ def get_song_features(song_name, num_notes, use_octave=False):
                 y1[example] = currNote[1]
                 y2[example] = currNote[0]
                 example += 1
-        X_no_duration = np.delete(X, list(range(0, X.shape[1], 3)), axis=1)
+        X_no_stamp = np.delete(X, list(range(0, X.shape[1], 3)), axis=1)
 
-    return X, X_no_duration, y0, y1, y2
+    return X, X_no_stamp, y0, y1, y2
