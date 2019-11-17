@@ -11,11 +11,15 @@ from tensorflow.keras.layers import Dense
 #from tensorflow.keras.activations import linear, relu, softmax
 #from tensorflow.keras.regularizers import l2
 
+def collectDatasets():
+    util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
 
-def main():
-    dataSet = "dataSets/four_notes__no_octave.npz"
-
-
+def trainModels(dataSet):
     # Get dataset, split into training set and test set
     X, X_no_stamp, y0, y1, y2 = util.get_data_set(dataSet)
 
@@ -32,7 +36,7 @@ def main():
     X2_test  = X_test
 
 
-    
+
     # Linear regression for delay
     print("\nTraining linear regression for delay.")
     linReg0 = LinearRegression(fit_intercept=True)
@@ -42,7 +46,7 @@ def main():
     print("Training set rms error: %f" % np.sqrt(mean_squared_error(y0_train, linReg0.predict(X0_train))))
     print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y0_test,  linReg0.predict(X0_test ))))
 
-    
+
     # Linear regression for duration
     print("\nTraining linear regression for duration.")
     linReg1 = LinearRegression(fit_intercept=True)
@@ -50,7 +54,7 @@ def main():
     print("Done training.")
 
     print("Training set rms error: %f" % np.sqrt(mean_squared_error(y1_train, linReg1.predict(X1_train))))
-    print("Test set rms error:     %f" % np.sqrtmean_squared_error(y1_test,  linReg1.predict(X1_test ))))
+    print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  linReg1.predict(X1_test))))
 
 
     # Multiclass logistic regression for pitch
@@ -76,7 +80,7 @@ def main():
 
     print("Training set rms error: %f" % np.sqrt(hnn0.history['mse'][-1]))
     print("Test set rms error:     %f" % np.sqrt(nn0.evaluate(x=X0_test,  y=y0_test, verbose=0)[1]))
-    
+
 
     # Neural net for duration
     print("\nTraining neural net for duration.")
@@ -107,11 +111,11 @@ def main():
     print("Test set accuracy:     %f" % np.sqrt(nn2.evaluate(x=X2_test,  y=y2_test, verbose=0)[1]))
 
 
+
+def main():
+    # collectDatasets()
+    trainModels("dataSets/four_notes__no_octave.npz")
+
+
 if __name__ == "__main__":
-    # util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
     main()
