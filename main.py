@@ -13,11 +13,11 @@ from tensorflow.keras.layers import Dense
 
 def collectDatasets():
     util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
 
 def trainModels(dataSet):
     # Get dataset, split into training set and test set
@@ -113,8 +113,8 @@ def trainModels(dataSet):
 
 
 def main():
-    collectDatasets()
-    # trainModels("dataSets/four_notes__no_octave.npz")
+    # collectDatasets()
+    trainModels("dataSets/four_notes__no_octave.npz")
 
 
 if __name__ == "__main__":
