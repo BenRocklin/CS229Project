@@ -13,21 +13,21 @@ from tensorflow.keras.layers import Dense
 
 def collectDatasets():
     util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
 
 def trainModels(dataSet):
     # Get dataset, split into training set and test set
-    X, X_no_stamp, y0, y1, y2 = util.get_data_set(dataSet)
+    X, y0, y1, y2 = util.get_data_set(dataSet)
 
-    X_train, X_test, X_no_stamp_train, X_no_stamp_test, y0_train, y0_test, y1_train, y1_test, y2_train, y2_test \
-        = train_test_split(X, X_no_stamp, y0, y1, y2, test_size=.15)
+    X_train, X_test, y0_train, y0_test, y1_train, y1_test, y2_train, y2_test \
+        = train_test_split(X, y0, y1, y2, test_size=.15)
 
-    X0_train = X_no_stamp_train
-    X0_test  = X_no_stamp_test
+    X0_train = X_train
+    X0_test  = X_test
 
     X1_train = X_train
     X1_test  = X_test
@@ -113,8 +113,8 @@ def trainModels(dataSet):
 
 
 def main():
-    # collectDatasets()
-    trainModels("dataSets/four_notes__no_octave.npz")
+    collectDatasets()
+    # trainModels("dataSets/four_notes__no_octave.npz")
 
 
 if __name__ == "__main__":
