@@ -1,0 +1,1 @@
+This file exists so git will track this (almost) empty directory. It's unecessary to store all our datasets in git since we can generate them whenever we want.
