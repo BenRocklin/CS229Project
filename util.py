@@ -18,7 +18,7 @@ def get_song_features(song_name, num_notes, use_octave=False):
     totalNotes = 0
     numFeatures = (3 * num_notes)
     X = None
-    y1, y2 = None, None
+    y0, y1, y2 = None, None, None
     for i, track in enumerate(midi.tracks):
         for msg in track:
             time += msg.time
@@ -52,13 +52,15 @@ def get_song_features(song_name, num_notes, use_octave=False):
         num_examples = totalNotes
         for numIdx in range(num_notes):
             num_examples -= len(notes[timestamps[numIdx]])
+        num_examples -= len(notes[timestamps[len(timestamps) - 1]])
 
+        num_pitches = 12 if use_octave is False else 128
         X = np.zeros((num_examples, numFeatures), dtype=int)
         y0 = np.zeros(num_examples) # relative starting time
         y1 = np.zeros(num_examples) # duration
-        y2 = np.zeros(num_examples) # pitch labels
+        y2 = np.zeros((num_examples, num_pitches)) # pitch labels
         example = 0
-        for timeIdx in range(len(timestamps) - num_notes):
+        for timeIdx in range(len(timestamps) - num_notes - 1):
             timestampIdx = timeIdx + num_notes # potentially miss avoidable notes here, but this should be fine
             timestamp = timestamps[timestampIdx]
             for currNote in notes[timestamp]:
@@ -70,6 +72,7 @@ def get_song_features(song_name, num_notes, use_octave=False):
                     priorTimestamp = timestamps[timestampIdx - offset]
                     nextNotes = notes[priorTimestamp].copy()
                     random.shuffle(nextNotes)
+                    delayFactored = False
                     while len(nextNotes) > 0:
                         shortestDuration = float('inf')
                         shortestNote = None
@@ -78,7 +81,12 @@ def get_song_features(song_name, num_notes, use_octave=False):
                             if priorNote[1] < shortestDuration:
                                 shortestDuration = priorNote[1]
                                 # features are timestamp relative to curr note's timestamp, duration, pitch of prior note
-                                shortestNote = (priorTimestamp - timestamp, priorNote[1], priorNote[0])
+                                delayParam = priorTimestamp - timestamp
+                                if delayFactored is True:
+                                    delayParam = 0
+                                else:
+                                    delayFactored = True
+                                shortestNote = (delayParam, priorNote[1], priorNote[0])
                                 originalShort = priorNote
                         list_priors.append(shortestNote)
                         nextNotes.remove(originalShort)
@@ -86,13 +94,14 @@ def get_song_features(song_name, num_notes, use_octave=False):
                             break
                     offset += 1
                 X[example, :] = np.ndarray.flatten(np.asarray(list_priors))
-                y0[example] = timestamp - timestamps[timestampIdx - 1]
+                y0[example] = timestamps[timestampIdx + 1] - timestamp
                 y1[example] = currNote[1]
-                y2[example] = currNote[0]
+                pitch_vec = np.zeros(num_pitches, dtype=int)
+                pitch_vec[currNote[0]] = 1
+                y2[example, :] = pitch_vec
                 example += 1
-        X_no_stamp = np.delete(X, list(range(0, X.shape[1], 3)), axis=1)
 
-    return X, X_no_stamp, y0, y1, y2
+    return X, y0, y1, y2
 
 
 def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./songs"):
@@ -103,27 +112,24 @@ def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./s
     for _, _, files in os.walk(songPath):
         songList = songList + files
     X = None
-    X_no_stamp = None
     y0 = None
     y1 = None
     y2 = None
     for songNum, song in enumerate(songList):
         print("Reading song %d of %d: %s" % (songNum + 1, len(songList), song))
-        songX, songXNoStamp, songY0, songY1, songY2 = get_song_features(songPath + "/" + song, num_notes, use_octave)
+        songX, songY0, songY1, songY2 = get_song_features(songPath + "/" + song, num_notes, use_octave)
         if X is None:
             X = songX
-            X_no_stamp = songXNoStamp
             y0 = songY0
             y1 = songY1
             y2 = songY2
         else:
             X = np.vstack((X, songX))
-            X_no_stamp = np.vstack((X_no_stamp, songXNoStamp))
             y0 = np.concatenate((y0, songY0))
             y1 = np.concatenate((y1, songY1))
-            y2 = np.concatenate((y2, songY2))
+            y2 = np.vstack((y2, songY2))
 
-    np.savez(saveName, X=X, X_no_stamp=X_no_stamp, y0=y0, y1=y1, y2=y2)
+    np.savez(saveName, X=X, y0=y0, y1=y1, y2=y2)
 
 
 def get_data_set(filename):
