@@ -2,9 +2,13 @@ import numpy as np
 from mido import MidiFile
 from collections import defaultdict
 import random
+import os
 
-# returns the feature vectors for the song along with labels for the note duration and note pitch
 def get_song_features(song_name, num_notes, use_octave=False):
+    '''
+    returns the feature vectors for the song along with labels for the note duration and note pitch
+    '''
+    
     random.seed(42069)
 
     midi = MidiFile(song_name)
@@ -89,3 +93,44 @@ def get_song_features(song_name, num_notes, use_octave=False):
         X_no_stamp = np.delete(X, list(range(0, X.shape[1], 3)), axis=1)
 
     return X, X_no_stamp, y0, y1, y2
+
+
+def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./songs"):
+    '''
+    Read through all the songs in songPath and save to saveName.
+    '''
+    songList = []
+    for _, _, files in os.walk(songPath):
+        songList = songList + files
+    X = None
+    X_no_stamp = None
+    y0 = None
+    y1 = None
+    y2 = None
+    for songNum, song in enumerate(songList):
+        print("Reading song %d of %d: %s" % (songNum + 1, len(songList), song))
+        songX, songXNoStamp, songY0, songY1, songY2 = get_song_features(songPath + "/" + song, num_notes, use_octave)
+        if X is None:
+            X = songX
+            X_no_stamp = songXNoStamp
+            y0 = songY0
+            y1 = songY1
+            y2 = songY2
+        else:
+            X = np.vstack((X, songX))
+            X_no_stamp = np.vstack((X_no_stamp, songXNoStamp))
+            y0 = np.concatenate((y0, songY0))
+            y1 = np.concatenate((y1, songY1))
+            y2 = np.concatenate((y2, songY2))
+
+    np.savez(saveName, X=X, X_no_stamp=X_no_stamp, y0=y0, y1=y1, y2=y2)
+
+
+def get_data_set(filename):
+    '''
+    Get the dataset saved in filename
+    '''
+    dataset = np.load(filename)
+    return dataset['X'], dataset['X_no_stamp'], dataset['y0'], dataset['y1'], dataset['y2']
+
+
