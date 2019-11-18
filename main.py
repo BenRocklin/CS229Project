@@ -1,5 +1,7 @@
 import util
 
+import matplotlib.pyplot as plt
+
 import numpy as np
 
 from sklearn.model_selection import train_test_split
@@ -9,15 +11,14 @@ from sklearn.metrics import mean_squared_error
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 #from tensorflow.keras.activations import linear, relu, softmax
-#from tensorflow.keras.regularizers import l2
 
 def collectDatasets():
     util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
     util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
     util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
 
 def trainModels(dataSet):
     # Get dataset, split into training set and test set
@@ -36,7 +37,7 @@ def trainModels(dataSet):
     X2_test  = X_test
 
 
-
+    '''
     # Linear regression for delay
     print("\nTraining linear regression for delay.")
     linReg0 = LinearRegression(fit_intercept=True)
@@ -55,7 +56,7 @@ def trainModels(dataSet):
 
     print("Training set rms error: %f" % np.sqrt(mean_squared_error(y1_train, linReg1.predict(X1_train))))
     print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  linReg1.predict(X1_test))))
-
+    
 
     # Multiclass logistic regression for pitch
     print("\nTraining logistic regression for pitch.")
@@ -67,7 +68,7 @@ def trainModels(dataSet):
     print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_test))
 
 
-
+    
     # Neural net for delay
     print("\nTraining neural net for delay.")
     nn0 = Sequential()
@@ -78,8 +79,8 @@ def trainModels(dataSet):
     hnn0 = nn0.fit(X0_train, y0_train, epochs=500, batch_size=500)
     print("Done training.")
 
-    print("Training set rms error: %f" % np.sqrt(hnn0.history['mse'][-1]))
-    print("Test set rms error:     %f" % np.sqrt(nn0.evaluate(x=X0_test,  y=y0_test, verbose=0)[1]))
+    #print("Training set rms error: %f" % np.sqrt(nn0.evaluate(x=X0_train, y=y0_train, verbose=0)[1])) # this is slow
+    print("Test set rms error:     %f" % np.sqrt(nn0.evaluate(x=X0_test,  y=y0_test,  verbose=0)[1]))
 
 
     # Neural net for duration
@@ -92,25 +93,41 @@ def trainModels(dataSet):
     hnn1 = nn1.fit(X1_train, y1_train, epochs=500, batch_size=500)
     print("Done training.")
 
-    print("Training set rms error: %f" % np.sqrt(hnn1.history['mse'][-1]))
-    print("Test set rms error:     %f" % np.sqrt(nn1.evaluate(x=X1_test,  y=y1_test, verbose=0)[1]))
+    #print("Training set rms error: %f" % np.sqrt(nn1.evaluate(x=X1_train, y=y1_train, verbose=0)[1])) # this is slow
+    print("Test set rms error:     %f" % np.sqrt(nn1.evaluate(x=X1_test,  y=y1_test,  verbose=0)[1]))
+    '''
 
+    
+    for nneurons in [20, 50, 100]:
+        for nhiddenlayers in [2, 3, 4]:
+            print("\n\n\n", nneurons, "Neurons per Hidden Layer:")
+            print(nhiddenlayers, "Hidden Layers:")
+            # Neural net for pitch
+            numClasses = y2.shape[1] # y2, y2_train, y2_test need to be one-hot vectors
+            print("\nTraining neural net for pitch.")
+            nn2 = Sequential()
+            for _ in range(nhiddenlayers):
+                nn2.add(Dense(nneurons, activation='relu'))
+            nn2.add(Dense(numClasses,  activation='softmax'))
+            nn2.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+            hnn2 = nn2.fit(X2_train, y2_train, epochs=100, batch_size=5000, verbose=2)
+            nn2.save('nnModels/nn2/%d_neurons__%d_layers.h5' % (nneurons, nhiddenlayers))
 
-    # Neural net for pitch
-    numClasses = y2.shape[1] # y2, y2_train, y2_test need to be one-hot vectors
-    print("\nTraining neural net for pitch.")
-    nn2 = Sequential()
-    nn2.add(Dense(10, activation='relu'))
-    nn2.add(Dense(10, activation='relu'))
-    nn2.add(Dense(numClasses,  activation='softmax'))
-    nn2.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    hnn2 = nn2.fit(X2_train, y2_train, epochs=2, batch_size=500)
-    print("Done training.")
+            print("Done training.")
 
-    print("Training set accuracy: %f" % np.sqrt(hnn2.history['accuracy'][-1]))
-    print("Test set accuracy:     %f" % np.sqrt(nn2.evaluate(x=X2_test,  y=y2_test, verbose=0)[1]))
+            _, ax1 = plt.subplots()
+            ax2 = ax1.twinx()
+            ax2.plot(np.multiply(hnn2.history['accuracy'], 100), color='tab:blue')
+            ax1.plot(hnn2.history['loss'], color='tab:red')
+            ax1.set_title('Training Neural Net for Pitch')
+            ax1.set_xlabel('Epoch')
+            ax2.set_ylabel('Accuracy (%)', color='tab:blue')
+            ax1.set_ylabel('Categorical Crossentropy', color='tab:red')
 
-
+            #print("Training set accuracy: %f" % nn2.evaluate(x=X2_train, y=y2_train, verbose=0)[1]) # this is slow
+            print("Test set accuracy:     %f" % nn2.evaluate(x=X2_test,  y=y2_test,  verbose=0)[1])
+            plt.savefig('figs/nn2/%d_neurons__%d_layers.png' % (nneurons, nhiddenlayers))
+    
 
 def main():
     # collectDatasets()

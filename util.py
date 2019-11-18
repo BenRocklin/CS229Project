@@ -137,6 +137,6 @@ def get_data_set(filename):
     Get the dataset saved in filename
     '''
     dataset = np.load(filename)
-    return dataset['X'], dataset['X_no_stamp'], dataset['y0'], dataset['y1'], dataset['y2']
+    return dataset['X'], dataset['y0'], dataset['y1'], dataset['y2']
 
 
