@@ -38,15 +38,17 @@ def trainModels(dataSet):
     X2_test  = X_test
 
 
-    '''
+    
     # Linear regression for delay
     print("\nTraining linear regression for delay.")
     linReg0 = LinearRegression(fit_intercept=True)
     linReg0.fit(X0_train, y0_train)
     print("Done training.")
 
-    print("Training set rms error: %f" % np.sqrt(mean_squared_error(y0_train, linReg0.predict(X0_train))))
-    print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y0_test,  linReg0.predict(X0_test ))))
+    print("Training set rms error: %f" % np.sqrt(mean_squared_error(y0_train, util.relu(linReg0.predict(X0_train)))))
+    print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y0_test,  util.relu(linReg0.predict(X0_test )))))
+    print("Label mean:  %f" % np.mean(y0_train))
+    print("Label stdev: %f" % np.std( y0_train))
 
 
     # Linear regression for duration
@@ -55,10 +57,11 @@ def trainModels(dataSet):
     linReg1.fit(X1_train, y1_train)
     print("Done training.")
 
-    print("Training set rms error: %f" % np.sqrt(mean_squared_error(y1_train, linReg1.predict(X1_train))))
-    print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  linReg1.predict(X1_test))))
+    print("Training set rms error: %f" % np.sqrt(mean_squared_error(y1_train, util.relu(linReg1.predict(X1_train)))))
+    print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  util.relu(linReg1.predict(X1_test )))))
+    print("Label mean:  %f" % np.mean(y1_train))
+    print("Label stdev: %f" % np.std( y1_train))
     '''
-
     # Multiclass logistic regression for pitch
     print("\nTraining logistic regression for pitch.")
     y2_train_i = util.one_hot_to_integer(y2_train)
@@ -71,7 +74,7 @@ def trainModels(dataSet):
     print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_test_i))
     util.plot_confusion_matrix(save_name="confusion_logistic.png", y_true=y2_test_i, y_pred=logReg2.predict(X2_test), normalize=False)
     
-    '''
+    
     # Neural net for delay
     for nneurons in [20, 50, 100]:
         for nhiddenlayers in [2, 3, 4]:
@@ -83,7 +86,7 @@ def trainModels(dataSet):
                 nn0.add(Dense(nneurons, activation='relu'))
             nn0.add(Dense(1,  activation='relu'))
             nn0.compile(optimizer='adam', loss='mse', metrics=['mse'])
-            hnn0 = nn0.fit(X0_train, y0_train, epochs=200, batch_size=5000, verbose=2)
+            hnn0 = nn0.fit(X0_train, y0_train, epochs=300, batch_size=5000, verbose=2)
             nn0.save('nnModels/nn0/%d_neurons__%d_layers.h5' % (nneurons, nhiddenlayers))
             
             print("Done training.")
@@ -105,7 +108,7 @@ def trainModels(dataSet):
             for _ in range(nhiddenlayers):
                 nn1.add(Dense(nneurons, activation='relu'))
             nn1.compile(optimizer='adam', loss='mse', metrics=['mse'])
-            hnn1 = nn1.fit(X1_train, y1_train, epochs=200, batch_size=5000, verbose=2)
+            hnn1 = nn1.fit(X1_train, y1_train, epochs=300, batch_size=5000, verbose=2)
             print("Done training.")
             nn1.save('nnModels/nn1/%d_neurons__%d_layers.h5' % (nneurons, nhiddenlayers))
 
@@ -117,8 +120,8 @@ def trainModels(dataSet):
             #print("Training set rms error: %f" % np.sqrt(nn1.evaluate(x=X1_train, y=y1_train, verbose=0)[1])) # this is slow
             print("Test set rms error:     %f" % np.sqrt(nn1.evaluate(x=X1_test,  y=y1_test,  verbose=0)[1]))
             plt.savefig('figs/nn1/%d_neurons__%d_layers.png' % (nneurons, nhiddenlayers))
-    '''
-    '''
+    
+    
     # Neural net for pitch
     for nneurons in [20, 50, 100]:
         for nhiddenlayers in [2, 3, 4]:

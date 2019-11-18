@@ -144,6 +144,11 @@ def get_data_set(filename):
     dataset = np.load(filename)
     return dataset['X'], dataset['y0'], dataset['y1'], dataset['y2']
 
+def relu(x):
+    for el in x:
+        if el < 0:
+            el = 0
+    return x
 
 # Adapted from scikit-learn confusion matrix page:
 def plot_confusion_matrix(save_name, y_true, y_pred, normalize=False, title=None, cmap=plt.cm.Blues):
