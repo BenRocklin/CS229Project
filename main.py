@@ -113,7 +113,7 @@ def trainModels(dataSet):
 
 
 def main():
-    # collectDatasets()
+    collectDatasets()
     trainModels("dataSets/four_notes__no_octave.npz")
 
 
