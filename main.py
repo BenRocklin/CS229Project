@@ -12,12 +12,12 @@ from tensorflow.keras.layers import Dense
 #from tensorflow.keras.regularizers import l2
 
 def collectDatasets():
-    util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
     util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=3, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=3, use_octave=True,  songPath="./songs")
 
 def trainModels(dataSet):
     # Get dataset, split into training set and test set
@@ -56,15 +56,16 @@ def trainModels(dataSet):
     print("Training set rms error: %f" % np.sqrt(mean_squared_error(y1_train, linReg1.predict(X1_train))))
     print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  linReg1.predict(X1_test))))
 
-
+    y2_no_hot_train = np.argmax(y2_train, axis=1)
+    y2_no_hot_test = np.argmax(y2_test, axis=1)
     # Multiclass logistic regression for pitch
     print("\nTraining logistic regression for pitch.")
     logReg2 = LogisticRegression(fit_intercept=True, C=1, class_weight=None, multi_class='ovr')
-    logReg2.fit(X2_train, y2_train)
+    logReg2.fit(X2_train, y2_no_hot_train)
     print("Done training.")
 
-    print("Training set accuracy: %f" % logReg2.score(X2_train, y2_train))
-    print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_test))
+    print("Training set accuracy: %f" % logReg2.score(X2_train, y2_no_hot_train))
+    print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_no_hot_test))
 
 
 
@@ -113,7 +114,7 @@ def trainModels(dataSet):
 
 
 def main():
-    collectDatasets()
+    # collectDatasets()
     trainModels("dataSets/four_notes__no_octave.npz")
 
 
