@@ -115,6 +115,8 @@ def get_features(x, num_notes, use_octave):
         feature[relStartIdx] = distanceBack
         feature[durationIdx] = duration
         feature[pitchIdx] = 1
+        noteIdx += 1
+    feature = feature.reshape((feature.shape[0], 1)).T
     return feature
 
 
@@ -144,7 +146,7 @@ def main():
     generate_midi_file(midi_file_name, notes)
 
 if __name__ == '__main__':
-    #main()
+    main()
     notes = [(294, 489, 0), (168, 221, 7), (172, 155, 1)] # typical valid input
     features = get_features(x=notes, num_notes=3, use_octave=False)
     print(features)
