@@ -1,7 +1,6 @@
 import util
-
+import os
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 from sklearn.model_selection import train_test_split
@@ -14,15 +13,14 @@ from tensorflow.keras.models import load_model
 #from tensorflow.keras.activations import linear, relu, softmax
 
 def collectDatasets():
-    util.extract_dataset_to_file(saveName="dataSets/two_notes__no_octave.npz",    num_notes=2, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/three_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
-    util.extract_dataset_to_file(saveName="dataSets/four_notes__no_octave.npz",   num_notes=4, use_octave=False, songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/two_notes__use_octave.npz",   num_notes=2, use_octave=True,  songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/three_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
-    # util.extract_dataset_to_file(saveName="dataSets/four_notes__use_octave.npz",  num_notes=4, use_octave=True,  songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/3_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
+    util.extract_dataset_to_file(saveName="dataSets/5_notes__no_octave.npz",  num_notes=5, use_octave=False, songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/3_notes__use_octave.npz", num_notes=3, use_octave=True,  songPath="./songs")
+    # util.extract_dataset_to_file(saveName="dataSets/5_notes__use_octave.npz", num_notes=5, use_octave=True,  songPath="./songs")
 
-def trainModels(dataSet):
+def trainModels(num_notes, use_octave):
     # Get dataset, split into training set and test set
+    dataSet = "dataSets/%d_notes__%s.npz" % (num_notes, "use_octave" if use_octave else "no_octave")
     X, y0, y1, y2 = util.get_data_set(dataSet)
 
     X_train, X_test, y0_train, y0_test, y1_train, y1_test, y2_train, y2_test \
@@ -78,7 +76,7 @@ def trainModels(dataSet):
     util.plot_confusion_matrix(save_name="confusion_logistic.png", y_true=y2_test_i, y_pred=logReg2.predict(X2_test), normalize=False)
     '''
 
-
+    
     # Neural net for delay
     for nneurons in [20, 50, 100]:
         for nlayers in [2, 3, 4]:
@@ -91,9 +89,12 @@ def trainModels(dataSet):
             nn0.add(Dense(1,  activation='relu'))
             nn0.compile(optimizer='adam', loss='mse', metrics=['mse'])
             hnn0 = nn0.fit(X0_train, y0_train, epochs=300, batch_size=5000, verbose=2)
-            nn0.save('nnModels/nn0/%d_neurons__%d_layers.h5' % (nneurons, nlayers))
-            
             print("Done training.")
+            
+            model_dir = "models/%d_notes__%s/delay" % (num_notes, "use_octave" if use_octave else "no_octave")
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
+            nn0.save('%s/%d_neurons__%d_layers.h5' % (model_dir, nneurons, nlayers))
 
             _, ax1 = plt.subplots()
             ax1.plot(np.sqrt(hnn0.history['loss']), color='tab:red')
@@ -102,8 +103,9 @@ def trainModels(dataSet):
 
             #print("Training set rms error: %f" % np.sqrt(nn0.evaluate(x=X0_train, y=y0_train, verbose=0)[1])) # this is slow
             print("Test set rms error:     %f" % np.sqrt(nn0.evaluate(x=X0_test,  y=y0_test,  verbose=0)[1]))
-            plt.savefig('figs/nn0/%d_neurons__%d_layers.png' % (nneurons, nlayers))
-    
+            plt.savefig('%s/%d_neurons__%d_layers.png' % (model_dir, nneurons, nlayers))
+            plt.close()
+
     # Neural net for duration
     for nneurons in [20, 50, 100]:
         for nlayers in [2, 3, 4]:
@@ -116,7 +118,11 @@ def trainModels(dataSet):
             nn1.compile(optimizer='adam', loss='mse', metrics=['mse'])
             hnn1 = nn1.fit(X1_train, y1_train, epochs=300, batch_size=5000, verbose=2)
             print("Done training.")
-            nn1.save('nnModels/nn1/%d_neurons__%d_layers.h5' % (nneurons, nlayers))
+
+            model_dir = "models/%d_notes__%s/duration" % (num_notes, "use_octave" if use_octave else "no_octave")
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
+            nn1.save('%s/%d_neurons__%d_layers.h5' % (model_dir, nneurons, nlayers))
 
             _, ax1 = plt.subplots()
             ax1.plot(np.sqrt(hnn1.history['loss']), color='tab:red')
@@ -125,9 +131,9 @@ def trainModels(dataSet):
 
             #print("Training set rms error: %f" % np.sqrt(nn1.evaluate(x=X1_train, y=y1_train, verbose=0)[1])) # this is slow
             print("Test set rms error:     %f" % np.sqrt(nn1.evaluate(x=X1_test,  y=y1_test,  verbose=0)[1]))
-            plt.savefig('figs/nn1/%d_neurons__%d_layers.png' % (nneurons, nlayers))
+            plt.savefig('%s/%d_neurons__%d_layers.png' % (model_dir, nneurons, nlayers))
+            plt.close()
     
-    '''
     # Neural net for pitch
     for nneurons in [20, 50, 100]:
         for nhiddenlayers in [2, 3, 4]:
@@ -140,10 +146,13 @@ def trainModels(dataSet):
                 nn2.add(Dense(nneurons, activation='relu'))
             nn2.add(Dense(numClasses,  activation='softmax'))
             nn2.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-            hnn2 = nn2.fit(X2_train, y2_train, epochs=100, batch_size=5000, verbose=2)
-            nn2.save('nnModels/nn2/%d_neurons__%d_layers.h5' % (nneurons, nhiddenlayers))
-
+            hnn2 = nn2.fit(X2_train, y2_train, epochs=300, batch_size=5000, verbose=2)
             print("Done training.")
+
+            model_dir = "models/%d_notes__%s/pitch" % (num_notes, "use_octave" if use_octave else "no_octave")
+            if not os.path.isdir(model_dir):
+                os.makedirs(model_dir)
+            nn2.save('%s/%d_neurons__%d_hiddenlayers.h5' % (model_dir, nneurons, nhiddenlayers))
 
             _, ax1 = plt.subplots()
             ax2 = ax1.twinx()
@@ -155,9 +164,11 @@ def trainModels(dataSet):
 
             #print("Training set accuracy: %f" % nn2.evaluate(x=X2_train, y=y2_train, verbose=0)[1]) # this is slow
             print("Test set accuracy:     %f" % nn2.evaluate(x=X2_test,  y=y2_test,  verbose=0)[1])
-            plt.savefig('figs/nn2/%d_neurons__%d_layers.png' % (nneurons, nhiddenlayers))
+            plt.savefig('%s/%d_neurons__%d_hiddenlayers.png' % (model_dir, nneurons, nhiddenlayers))
+            plt.close()
 
 
+    '''
     # Generate Confustion matrix
     modelname = 'nnModels/nn2/100_neurons__4_layers.h5'
     nn2 = load_model(modelname)
@@ -169,7 +180,8 @@ def trainModels(dataSet):
 
 def main():
     # collectDatasets()
-    trainModels("dataSets/four_notes__no_octave.npz")
+    trainModels(num_notes=5, use_octave=False)
+    trainModels(num_notes=3, use_octave=False)
 
 
 if __name__ == "__main__":
