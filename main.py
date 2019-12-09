@@ -105,7 +105,7 @@ def trainModels(num_notes, use_octave):
             print("Test set rms error:     %f" % np.sqrt(nn0.evaluate(x=X0_test,  y=y0_test,  verbose=0)[1]))
             plt.savefig('%s/%d_neurons__%d_layers.png' % (model_dir, nneurons, nlayers))
             plt.close()
-
+    
     # Neural net for duration
     for nneurons in [20, 50, 100]:
         for nlayers in [2, 3, 4]:
@@ -115,6 +115,7 @@ def trainModels(num_notes, use_octave):
             nn1 = Sequential()
             for _ in range(nlayers):
                 nn1.add(Dense(nneurons, activation='relu'))
+            nn1.add(Dense(1,  activation='relu'))
             nn1.compile(optimizer='adam', loss='mse', metrics=['mse'])
             hnn1 = nn1.fit(X1_train, y1_train, epochs=300, batch_size=5000, verbose=2)
             print("Done training.")
@@ -166,7 +167,7 @@ def trainModels(num_notes, use_octave):
             print("Test set accuracy:     %f" % nn2.evaluate(x=X2_test,  y=y2_test,  verbose=0)[1])
             plt.savefig('%s/%d_neurons__%d_hiddenlayers.png' % (model_dir, nneurons, nhiddenlayers))
             plt.close()
-
+    
 
     '''
     # Generate Confustion matrix
@@ -180,8 +181,8 @@ def trainModels(num_notes, use_octave):
 
 def main():
     # collectDatasets()
-    trainModels(num_notes=5, use_octave=False)
-    trainModels(num_notes=3, use_octave=False)
+    # trainModels(num_notes=5, use_octave=False)
+    # trainModels(num_notes=3, use_octave=False)
 
 
 if __name__ == "__main__":
