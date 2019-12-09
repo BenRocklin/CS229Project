@@ -23,7 +23,7 @@ class LinearPredictor:
 		return delay, duration, pitch
 
 
-def generate_song_notes(num_notes, use_NN, predictor, song_length=300, num_throwaway_notes=20, use_octave=False):
+def generate_song_notes(num_notes, use_NN, song_length=300, num_throwaway_notes=20, use_octave=False):
 	delays    = [] # list of integers
 	durations = [] # list of integers
 	pitches   = [] # list of one-hot numpy arrays
@@ -70,10 +70,10 @@ def generate_midi_file(midi_file_name, num_notes, delays, durations, pitches, us
 	# pitches   is a list of one-hot numpy arrays
 	
 	# save to midi_file_name
+	pass
 
 
-
-def main(use_NN):
+def main():
 	### Parameters ###
 	num_notes = 4
 	use_octave = False
@@ -83,7 +83,7 @@ def main(use_NN):
 	midi_file_name = "generatedSongs/our_first_song.midi"
 
 	### Compose a song! ###
-	delays, durations, pitches = generate_song_notes(num_notes, use_NN, predictor, song_length, num_throwaway_notes, use_octave)
+	delays, durations, pitches = generate_song_notes(num_notes, use_NN, song_length, num_throwaway_notes, use_octave)
 	generate_midi_file(midi_file_name, num_notes, delays, durations, pitches, use_octave)
 
 if __name__ == '__main__':
