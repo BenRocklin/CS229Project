@@ -137,7 +137,10 @@ def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./s
 
 
 def one_hot_to_integer(one_hot):
-    return np.argmax(one_hot, axis=1)
+    if one_hot.ndim >= 2:
+        return np.argmax(one_hot, axis=1)
+    else:
+        return np.argmax(one_hot)
 
 def get_data_set(filename):
     '''
