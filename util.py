@@ -18,7 +18,8 @@ def get_song_features(song_name, num_notes, use_octave=False):
     timestamps = [] # needed since defaultdicts don't necessarily have key ordering
     time = 0
     totalNotes = 0
-    numFeatures = (3 * num_notes)
+    num_pitches = 12 if use_octave is False else 128
+    numFeatures = ((2 + num_pitches) * num_notes)
     X = None
     y0, y1, y2 = None, None, None
     for i, track in enumerate(midi.tracks):
@@ -56,7 +57,6 @@ def get_song_features(song_name, num_notes, use_octave=False):
             num_examples -= len(notes[timestamps[numIdx]])
         num_examples -= len(notes[timestamps[len(timestamps) - 1]])
 
-        num_pitches = 12 if use_octave is False else 128
         X = np.zeros((num_examples, numFeatures), dtype=int)
         y0 = np.zeros(num_examples) # relative starting time
         y1 = np.zeros(num_examples) # duration
@@ -74,21 +74,23 @@ def get_song_features(song_name, num_notes, use_octave=False):
                     priorTimestamp = timestamps[timestampIdx - offset]
                     nextNotes = notes[priorTimestamp].copy()
                     random.shuffle(nextNotes)
-                    delayFactored = False
+                    # delayFactored = False
                     while len(nextNotes) > 0:
                         shortestDuration = float('inf')
-                        shortestNote = None
+                        shortestNote = np.zeros(num_pitches + 2, dtype=int)
                         originalShort = None
                         for priorNote in nextNotes:
                             if priorNote[1] < shortestDuration:
                                 shortestDuration = priorNote[1]
                                 # features are timestamp relative to curr note's timestamp, duration, pitch of prior note
                                 delayParam = priorTimestamp - timestamp
-                                if delayFactored is True:
-                                    delayParam = 0
-                                else:
-                                    delayFactored = True
-                                shortestNote = (delayParam, priorNote[1], priorNote[0])
+                                # if delayFactored is True:
+                                #     delayParam = 0
+                                # else:
+                                #     delayFactored = True
+                                shortestNote[0] = delayParam
+                                shortestNote[1] = priorNote[1]
+                                shortestNote[2 + priorNote[0]] = 1
                                 originalShort = priorNote
                         list_priors.append(shortestNote)
                         nextNotes.remove(originalShort)

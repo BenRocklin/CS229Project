@@ -61,20 +61,24 @@ def trainModels(dataSet):
     print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  util.relu(linReg1.predict(X1_test )))))
     print("Label mean:  %f" % np.mean(y1_train))
     print("Label stdev: %f" % np.std( y1_train))
-    
+
+    y2_no_hot_train = np.argmax(y2_train, axis=1)
+    y2_no_hot_test = np.argmax(y2_test, axis=1)
+
     # Multiclass logistic regression for pitch
     print("\nTraining logistic regression for pitch.")
     y2_train_i = util.one_hot_to_integer(y2_train)
     y2_test_i  = util.one_hot_to_integer(y2_test)
     logReg2 = LogisticRegression(fit_intercept=True, C=1, class_weight=None, multi_class='ovr')
-    logReg2.fit(X2_train, y2_train_i)
+    logReg2.fit(X2_train, y2_no_hot_train)
     print("Done training.")
 
-    print("Training set accuracy: %f" % logReg2.score(X2_train, y2_train_i))
-    print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_test_i))
+    print("Training set accuracy: %f" % logReg2.score(X2_train, y2_no_hot_train))
+    print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_no_hot_test))
     util.plot_confusion_matrix(save_name="confusion_logistic.png", y_true=y2_test_i, y_pred=logReg2.predict(X2_test), normalize=False)
     '''
-    
+
+
     # Neural net for delay
     for nneurons in [20, 50, 100]:
         for nlayers in [2, 3, 4]:
