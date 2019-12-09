@@ -1,5 +1,5 @@
 import util
-
+import numpy as np
 
 class NNPredictor:
 	def __init__(self, num_notes, use_octave):
@@ -57,10 +57,31 @@ def initialize_features(num_notes, use_octave):
 
 # Ben do this function:
 def get_features(x, num_notes, use_octave):
-	'''
-	Remove oldest note from x and add new note to x
-	'''
-	return x
+	num_pitches = 12 if use_octave is False else 128
+	note_len = (2 + num_pitches)
+	feature_length = note_len * num_notes
+	feature = np.zeros(feature_length, dtype=int)
+	noteIdx = 0
+	distanceBack = None
+	for note in reversed(x):
+		if noteIdx == num_notes:
+			break
+		delay = note[0]
+		duration = note[1]
+		pitch = util.one_hot_to_integer(note[2])
+		if distanceBack is None:
+			distanceBack = delay
+		else:
+			distanceBack += delay
+
+		relStartIdx = note_len * noteIdx
+		durationIdx = note_len * noteIdx + 1
+		pitchIdx = note_len * noteIdx + 2 + pitch
+		feature[relStartIdx] = distanceBack
+		feature[durationIdx] = duration
+		feature[pitchIdx] = 1
+
+	return feature
 
 
 # Ben do this function
