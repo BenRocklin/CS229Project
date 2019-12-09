@@ -9,6 +9,7 @@ class NNPredictor:
 		delay    = None
 		duration = None
 		pitch    = None
+		pitch = util.one_hot_to_integer(pitch)
 		return delay, duration, pitch
 
 
@@ -20,15 +21,15 @@ class LinearPredictor:
 		delay    = None
 		duration = None
 		pitch    = None
+		# one hot conversion unnecessary here
 		return delay, duration, pitch
 
 
 def generate_song_notes(num_notes, use_NN, song_length=300, num_throwaway_notes=20, use_octave=False):
-	delays    = [] # list of integers
-	durations = [] # list of integers
-	pitches   = [] # list of one-hot numpy arrays
+	notes = [] # list of note tuples of form (delay, duration, pitches)
+	# note: all three values above should be an int
 
-	x = initialize_features(num_notes, use_octave)
+	notes = initialize_features(num_notes, use_octave) # make x a list of tuples
 
 	if use_NN:
 		predictor = NNPredictor(num_notes, use_octave)
@@ -36,18 +37,17 @@ def generate_song_notes(num_notes, use_NN, song_length=300, num_throwaway_notes=
 		predictor = LinearPredictor(num_notes, use_octave)
 
 	for _ in range(num_throwaway_notes):
-		delay, duration, pitch  = predictor.predict(x)
-		x = update_features(x, use_octave, num_notes, delay, duration, pitch)
+		features = get_features(notes, use_octave, num_notes)
+		note = predictor.predict(features)
+		notes.append(note)
+		notes.pop(0)
 
 	for _ in range(song_length):
-		delay, duration, pitch  = predictor.predict(x)
-		x = update_features(x, use_octave, num_notes, delay, duration, pitch)
-		
-		delays    += [delay]
-		durations += [duration]
-		pitches   += [pitch]
+		features = get_features(notes, use_octave, num_notes)
+		note = predictor.predict(features)
+		notes.append(note)
 
-	return delays, durations, pitches
+	return notes
 
 
 def initialize_features(num_notes, use_octave):
@@ -56,7 +56,7 @@ def initialize_features(num_notes, use_octave):
 
 
 # Ben do this function:
-def update_features(x, num_notes, use_octave, new_delay, new_duration, new_pitch):
+def get_features(x, num_notes, use_octave):
 	'''
 	Remove oldest note from x and add new note to x
 	'''
@@ -64,10 +64,7 @@ def update_features(x, num_notes, use_octave, new_delay, new_duration, new_pitch
 
 
 # Ben do this function
-def generate_midi_file(midi_file_name, num_notes, delays, durations, pitches, use_octave):
-	# delays    is a list of integers
-	# durations is a list of integers
-	# pitches   is a list of one-hot numpy arrays
+def generate_midi_file(midi_file_name, notes):
 	
 	# save to midi_file_name
 	pass
@@ -83,8 +80,8 @@ def main():
 	midi_file_name = "generatedSongs/our_first_song.midi"
 
 	### Compose a song! ###
-	delays, durations, pitches = generate_song_notes(num_notes, use_NN, song_length, num_throwaway_notes, use_octave)
-	generate_midi_file(midi_file_name, num_notes, delays, durations, pitches, use_octave)
+	notes = generate_song_notes(num_notes, use_NN, song_length, num_throwaway_notes, use_octave)
+	generate_midi_file(midi_file_name, notes)
 
 if __name__ == '__main__':
 	main()
