@@ -180,9 +180,9 @@ def trainModels(num_notes, use_octave):
     '''
 
 def main():
-    # collectDatasets()
+    collectDatasets()
     # trainModels(num_notes=5, use_octave=False)
-    # trainModels(num_notes=3, use_octave=False)
+    trainModels(num_notes=3, use_octave=False)
 
 
 if __name__ == "__main__":
