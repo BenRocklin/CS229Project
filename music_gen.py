@@ -3,6 +3,7 @@ import numpy as np
 from collections import defaultdict
 from tensorflow.keras.models import load_model
 from mido import Message, MidiFile, MidiTrack
+import pickle
 
 class NNPredictor:
     def __init__(self, num_notes, use_octave, nnModelNames):
@@ -32,14 +33,32 @@ class NNPredictor:
 
 class LinearPredictor:
     def __init__(self, num_notes, use_octave):
-        pass
+        model_dir = "models/%d_notes__%s" % (num_notes, "use_octave" if use_octave else "no_octave")
+
+        self.linReg0 = pickle.load(open(model_dir + "/delay/linear_model.sav", 'rb'))
+        self.linReg2 = pickle.load(open(model_dir + "/duration/linear_model.sav", 'rb'))
+        self.logReg3 = pickle.load(open(model_dir + "/pitch/logistic_model.sav", 'rb'))
 
     def predict(self, x):
-        delay    = None
-        duration = None
-        pitch    = None
+        delay    = self.relu(self.linReg0.predict(x.reshape((1,-1)))[0])
+        duration = self.relu(self.linReg2.predict(x.reshape((1,-1)))[0])
+        pitch    = self.logReg3.predict(x.reshape((1,-1)))[0]
         # one hot conversion unnecessary here
+
+        print("== Predicting ==")
+        print("delay =")
+        print(delay)
+        print("duration =")
+        print(duration)
+        print("pitch =")
+        print(pitch)
         return delay, duration, pitch
+
+    def relu(self, x):
+        if x > 0:
+            return (int) (x)
+        else:
+            return (int) (0)
 
 
 def generate_song_notes(num_notes, use_NN, nnModelNames, song_length=300, num_throwaway_notes=10, use_octave=False):
@@ -78,6 +97,7 @@ def generate_song_notes(num_notes, use_NN, nnModelNames, song_length=300, num_th
 def initialize_notes(num_notes, use_octave, predictor):
     dataSet = "dataSets/%d_notes__%s.npz" % (num_notes, "use_octave" if use_octave else "no_octave")
     X, _, _, _ = util.get_data_set(dataSet)
+    np.random.seed(5)
     indices = np.random.randint(0, X.shape[0], size=num_notes)
     features =  X[indices,:]
 
@@ -217,17 +237,23 @@ def generate_midi_file(midi_file_name, notes, use_octave):
 
 def main():
     ### Parameters ###
-    num_notes = 3
+    num_notes = 5
     use_octave = False
-    use_NN = True
-    nnModelNames = (  # only used when use_NN == True
-        "20_neurons__2_layers.h5",       # delay 
-        "20_neurons__2_layers.h5",       # duration
-        "20_neurons__2_hiddenlayers.h5") # pitch
+    use_NN = False
+    if num_notes == 3:
+        nnModelNames = (  # only used when use_NN == True
+            "100_neurons__4_layers.h5",       # delay 
+            "100_neurons__3_layers.h5",       # duration
+            "50_neurons__4_hiddenlayers.h5") # pitch
+    elif num_notes == 5:
+        nnModelNames = (  # only used when use_NN == True
+            "100_neurons__4_layers.h5",       # delay 
+            "100_neurons__4_layers.h5",       # duration
+            "100_neurons__4_hiddenlayers.h5") # pitch
 
     song_length = 300
-    num_throwaway_notes = 10
-    midi_file_name = "generatedSongs/our_first_song.mid"
+    num_throwaway_notes = 0
+    midi_file_name = ("generatedSongs/%s_song__%d_prior_notes__no_2.mid" % ("NN" if use_NN else "LIN", num_notes))
 
     ### Compose a song! ###
     notes = generate_song_notes(num_notes, use_NN, nnModelNames, song_length, num_throwaway_notes, use_octave)
@@ -235,10 +261,9 @@ def main():
 
 if __name__ == '__main__':
     main()
-    notes = [(294, 489, 0), (168, 221, 7), (172, 155, 1)] # typical valid input
-    features = get_features(x=notes, num_notes=3, use_octave=False)
-    print(features)
-
+    #notes = [(294, 489, 0), (168, 221, 7), (172, 155, 1)] # typical valid input
+    #features = get_features(x=notes, num_notes=3, use_octave=False)
+    #print(features)
 
 
 
