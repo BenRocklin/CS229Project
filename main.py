@@ -11,6 +11,7 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import load_model
 #from tensorflow.keras.activations import linear, relu, softmax
+import pickle
 
 def collectDatasets():
     util.extract_dataset_to_file(saveName="dataSets/3_notes__no_octave.npz",  num_notes=3, use_octave=False, songPath="./songs")
@@ -42,6 +43,10 @@ def trainModels(num_notes, use_octave):
     linReg0 = LinearRegression(fit_intercept=True)
     linReg0.fit(X0_train, y0_train)
     print("Done training.")
+    model_dir = "models/%d_notes__%s/delay" % (num_notes, "use_octave" if use_octave else "no_octave")
+    filename = 'linear_model.sav'
+    pickle.dump(linReg0, open(model_dir+"/"+filename, 'wb'))
+
 
     print("Training set rms error: %f" % np.sqrt(mean_squared_error(y0_train, util.relu(linReg0.predict(X0_train)))))
     print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y0_test,  util.relu(linReg0.predict(X0_test )))))
@@ -49,34 +54,41 @@ def trainModels(num_notes, use_octave):
     print("Label stdev: %f" % np.std( y0_train))
 
 
+    
     # Linear regression for duration
     print("\nTraining linear regression for duration.")
     linReg1 = LinearRegression(fit_intercept=True)
     linReg1.fit(X1_train, y1_train)
     print("Done training.")
+    model_dir = "models/%d_notes__%s/duration" % (num_notes, "use_octave" if use_octave else "no_octave")
+    filename = 'linear_model.sav'
+    pickle.dump(linReg1, open(model_dir+"/"+filename, 'wb'))
+
 
     print("Training set rms error: %f" % np.sqrt(mean_squared_error(y1_train, util.relu(linReg1.predict(X1_train)))))
     print("Test set rms error:     %f" % np.sqrt(mean_squared_error(y1_test,  util.relu(linReg1.predict(X1_test )))))
     print("Label mean:  %f" % np.mean(y1_train))
     print("Label stdev: %f" % np.std( y1_train))
 
-    y2_no_hot_train = np.argmax(y2_train, axis=1)
-    y2_no_hot_test = np.argmax(y2_test, axis=1)
-
+    '''
     # Multiclass logistic regression for pitch
     print("\nTraining logistic regression for pitch.")
-    y2_train_i = util.one_hot_to_integer(y2_train)
-    y2_test_i  = util.one_hot_to_integer(y2_test)
+    y2_train_i = np.argmax(y2_train, axis=1)
+    y2_test_i  = np.argmax(y2_test,  axis=1)
     logReg2 = LogisticRegression(fit_intercept=True, C=1, class_weight=None, multi_class='ovr')
-    logReg2.fit(X2_train, y2_no_hot_train)
+    logReg2.fit(X2_train, y2_train_i)
     print("Done training.")
+    model_dir = "models/%d_notes__%s/pitch" % (num_notes, "use_octave" if use_octave else "no_octave")
+    filename = 'logistic_model.sav'
+    pickle.dump(logReg2, open(model_dir+"/"+filename, 'wb'))
 
-    print("Training set accuracy: %f" % logReg2.score(X2_train, y2_no_hot_train))
-    print("Test set accuracy:     %f" % logReg2.score(X2_test, y2_no_hot_test))
-    util.plot_confusion_matrix(save_name="confusion_logistic.png", y_true=y2_test_i, y_pred=logReg2.predict(X2_test), normalize=False)
-    '''
-
+    print("Training set accuracy: %f" % logReg2.score(X2_train, y2_train_i))
+    print("Test set accuracy:     %f" % logReg2.score(X2_test,  y2_test_i))
+    util.plot_confusion_matrix(save_name=("test_confusion_%d_notes_logistic.png"  % num_notes), y_true=y2_test_i,  y_pred=logReg2.predict(X2_test),  normalize=False)
+    util.plot_confusion_matrix(save_name=("train_confusion_%d_notes_logistic.png" % num_notes), y_true=y2_train_i, y_pred=logReg2.predict(X2_train), normalize=False)
     
+
+    '''
     # Neural net for delay
     for nneurons in [20, 50, 100]:
         for nlayers in [2, 3, 4]:
@@ -169,20 +181,20 @@ def trainModels(num_notes, use_octave):
             plt.close()
     
 
-    '''
+    
     # Generate Confustion matrix
-    modelname = 'nnModels/nn2/100_neurons__4_layers.h5'
+    modelname = 'models/3_notes__no_octave/pitch/100_neurons__4_hiddenlayers.h5'
+    savename = "test_confusion_3_notes__100_neurons__4_hiddenlayers.png"
     nn2 = load_model(modelname)
-    util.plot_confusion_matrix(save_name="confusion_100_neurons__4_layers.png",
-        y_true=util.one_hot_to_integer(y2_test),
-        y_pred=util.one_hot_to_integer(nn2.predict(X2_test)),
-        normalize=False)
+    y_true=np.argmax(y2_test, axis=1)
+    y_pred=np.argmax(nn2.predict(X2_test), axis=1)  
+    util.plot_confusion_matrix(save_name=savename, y_true=y_true, y_pred=y_pred, normalize=False)
     '''
 
 def main():
     # collectDatasets()
-    # trainModels(num_notes=5, use_octave=False)
-    # trainModels(num_notes=3, use_octave=False)
+    trainModels(num_notes=5, use_octave=False)
+    trainModels(num_notes=3, use_octave=False)
 
 
 if __name__ == "__main__":
