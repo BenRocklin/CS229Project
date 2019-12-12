@@ -6,12 +6,13 @@ from sklearn.metrics import confusion_matrix
 import random
 import os
 
-def get_song_features(song_name, num_notes, use_octave=False):
+def get_song_features(song_name, num_notes, use_octave=False, augment=True):
     '''
     returns the feature vectors for the song along with labels for the note duration and note pitch
     '''
     
     random.seed(42069)
+    num_augments = 11 # number of extra augments we should do
 
     midi = MidiFile(song_name)
     notes = defaultdict(list)
@@ -21,6 +22,8 @@ def get_song_features(song_name, num_notes, use_octave=False):
     num_pitches = 12 if use_octave is False else 128
     numFeatures = ((2 + num_pitches) * num_notes)
     X = None
+    y0, y1, y2 = None, None, None
+    X_aug = None
     y0, y1, y2 = None, None, None
     for i, track in enumerate(midi.tracks):
         for msg in track:
@@ -58,9 +61,13 @@ def get_song_features(song_name, num_notes, use_octave=False):
         num_examples -= len(notes[timestamps[len(timestamps) - 1]])
 
         X = np.zeros((num_examples, numFeatures), dtype=int)
-        y0 = np.zeros(num_examples) # relative starting time
-        y1 = np.zeros(num_examples) # duration
-        y2 = np.zeros((num_examples, num_pitches)) # pitch labels
+        y0 = np.zeros(num_examples, dtype=int) # relative starting time
+        y1 = np.zeros(num_examples, dtype=int) # duration
+        y2 = np.zeros((num_examples, num_pitches), dtype=int) # pitch labels
+        X_aug = np.zeros((num_augments * num_examples, numFeatures), dtype=int)
+        y0_aug = np.zeros(num_augments * num_examples, dtype=int)
+        y1_aug = np.zeros(num_augments * num_examples, dtype=int)
+        y2_aug = np.zeros((num_augments * num_examples, num_pitches), dtype=int)
         example = 0
         for timeIdx in range(len(timestamps) - num_notes - 1):
             timestampIdx = timeIdx + num_notes # potentially miss avoidable notes here, but this should be fine
@@ -103,7 +110,42 @@ def get_song_features(song_name, num_notes, use_octave=False):
                 pitch_vec = np.zeros(num_pitches, dtype=int)
                 pitch_vec[currNote[0]] = 1
                 y2[example, :] = pitch_vec
+
+                if augment:
+                    original_X = X[example, :]
+                    original_y0 = y0[example]
+                    original_y1 = y1[example]
+                    original_y2 = y2[example]
+                    for augmentNum in range(num_augments):
+                        augmentIdx = example * num_augments + augmentNum
+                        bump_amount = augmentNum + 1
+                        new_X = np.zeros(num_notes * (num_pitches + 2), dtype=int)
+                        new_y2 = np.zeros(num_pitches, dtype=int)
+                        note_size = num_pitches + 2
+                        for traverse_idx in range(num_notes * note_size):
+                            if traverse_idx % note_size == 0 or traverse_idx % note_size == 1:
+                                new_X[traverse_idx] = original_X[traverse_idx]
+                            elif original_X[traverse_idx] == 1:
+                                note_num = traverse_idx // note_size
+                                note_idx = traverse_idx % note_size
+                                pitch = note_idx - 2
+                                augmented_pitch = (pitch + bump_amount) % num_pitches
+                                augmented_note_idx = augmented_pitch + 2
+                                augment_idx = note_num * note_size + augmented_note_idx
+                                new_X[augment_idx] = 1
+                        X_aug[augmentIdx, :] = new_X
+                        y0_aug[augmentIdx] = original_y0
+                        y1_aug[augmentIdx] = original_y1
+                        y2_pitch_original = np.argmax(original_y2, axis=0)
+                        new_y2[(y2_pitch_original + bump_amount) % num_pitches] = 1
+                        y2_aug[augmentIdx, :] = new_y2
                 example += 1
+
+    if augment:
+        X = np.vstack((X, X_aug))
+        y0 = np.concatenate((y0, y0_aug))
+        y1 = np.concatenate((y1, y1_aug))
+        y2 = np.vstack((y2, y2_aug))
 
     return X, y0, y1, y2
 
