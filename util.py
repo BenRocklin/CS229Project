@@ -150,7 +150,7 @@ def get_song_features(song_name, num_notes, use_octave=False, augment=True):
     return X, y0, y1, y2
 
 
-def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./songs"):
+def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./songs", augment=True):
     '''
     Read through all the songs in songPath and save to saveName.
     '''
@@ -163,7 +163,7 @@ def extract_dataset_to_file(saveName, num_notes, use_octave=False, songPath="./s
     y2 = None
     for songNum, song in enumerate(songList):
         print("Reading song %d of %d: %s" % (songNum + 1, len(songList), song))
-        songX, songY0, songY1, songY2 = get_song_features(songPath + "/" + song, num_notes, use_octave)
+        songX, songY0, songY1, songY2 = get_song_features(songPath + "/" + song, num_notes, use_octave, augment)
         if X is None:
             X = songX
             y0 = songY0
